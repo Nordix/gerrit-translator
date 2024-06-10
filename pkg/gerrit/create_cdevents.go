@@ -28,10 +28,10 @@ func (projectCreated *ProjectCreated) RepositoryCreatedCDEvent() (string, error)
 		Log().Error("Error creating CDEvent RepositoryCreatedEvent %s\n", err)
 		return "", err
 	}
-	cdEvent.SetSource(projectCreated.RepoURL)
-	cdEvent.SetSubjectName(projectCreated.ProjectName)
-	cdEvent.SetSubjectId(projectCreated.HeadName)
-	cdEvent.SetSubjectUrl(projectCreated.RepoURL)
+	// cdEvent.SetSource(projectCreated.RepoURL)
+	// cdEvent.SetSubjectName(projectCreated.ProjectName)
+	//cdEvent.SetSubjectId(projectCreated.HeadName)
+	//cdEvent.SetSubjectUrl(projectCreated.RepoURL)
 	cdEventStr, err := sdk.AsJsonString(cdEvent)
 	if err != nil {
 		Log().Error("Error creating RepositoryCreated CDEvent as Json string %s\n", err)
