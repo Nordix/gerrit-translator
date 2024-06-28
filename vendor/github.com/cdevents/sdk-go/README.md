@@ -12,11 +12,10 @@ Add the module as dependency using go mod:
 go get github.com/cdevents/sdk-go
 ```
 
-And import the module in your code corresponding to the desired version of the specification.
-For CDEvents v0.3.x, use:
+And import the module in your code
 
 ```golang
-import cdevents "github.com/cdevents/sdk-go/pkg/api/v03"
+import cdevents "github.com/cdevents/sdk-go/pkg/api"
 ```
 
 ## Create your first CDEvent

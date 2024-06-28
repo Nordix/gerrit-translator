@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	"golang.org/x/mod/semver"
@@ -36,24 +35,13 @@ const (
 	CDEventsTypeRegex         = "^dev\\.cdevents\\.(?P<subject>[a-z]+)\\.(?P<predicate>[a-z]+)\\.(?P<version>.*)$"
 )
 
-var CDEventsTypeCRegex = regexp.MustCompile(CDEventsTypeRegex)
+var (
+	CDEventsTypeCRegex = regexp.MustCompile(CDEventsTypeRegex)
 
-type BaseContextReader interface {
-
-	// GetVersion returns the CDEvents spec version
-	GetVersion() string
-
-	// GetType returns the CDEvents event type as string
-	GetType() CDEventType
-}
-
-func (t Context) GetVersion() string {
-	return t.Version
-}
-
-func (t Context) GetType() CDEventType {
-	return t.Type
-}
+	// CDEventsByUnversionedTypes maps non-versioned event types with events
+	// set-pup at init time
+	CDEventsByUnversionedTypes map[string]CDEvent
+)
 
 type Context struct {
 	// Spec: https://cdevents.dev/docs/spec/#version
@@ -75,7 +63,7 @@ type Context struct {
 	// purpose of the source is to provide global uniqueness for source + id.
 	// The source MAY identify a single producer or a group of producer that
 	// belong to the same application.
-	Source string `json:"source" jsonschema:"required,minLength=1" validate:"uri-reference"`
+	Source string `json:"source" jsonschema:"required,minLength=1" validate:"uri-reference" cdevents:"context_source"`
 
 	// Spec: https://cdevents.dev/docs/spec/#type
 	// Description: defines the type of event, as combination of a subject and
@@ -83,7 +71,7 @@ type Context struct {
 	// types should be prefixed with dev.cdevents.
 	// One occurrence may have multiple events associated, as long as they have
 	// different event types
-	Type CDEventType `json:"type" jsonschema:"required,minLength=1" validate:"event-type"`
+	Type string `json:"type" jsonschema:"required,minLength=1" validate:"event-type"`
 
 	// Spec: https://cdevents.dev/docs/spec/#timestamp
 	// Description: Description: defines the time of the occurrence. When the
@@ -98,14 +86,14 @@ type Reference struct {
 
 	// Spec: https://cdevents.dev/docs/spec/#format-of-subjects
 	// Description: Uniquely identifies the subject within the source
-	Id string `json:"id" jsonschema:"required,minLength=1"`
+	Id string `json:"id" jsonschema:"required,minLength=1" cdevents:"subject_id"`
 
 	// Spec: https://cdevents.dev/docs/spec/#format-of-subjects
 	// Description: defines the context in which an event happened. The main
 	// purpose of the source is to provide global uniqueness for source + id.
 	// The source MAY identify a single producer or a group of producer that
 	// belong to the same application.
-	Source string `json:"source,omitempty" validate:"uri-reference"`
+	Source string `json:"source,omitempty" validate:"uri-reference" cdevents:"subject_source"`
 }
 
 type SubjectBase struct {
@@ -153,23 +141,6 @@ func (t CDEventType) IsCompatible(other CDEventType) bool {
 		semver.Major("v"+t.Version) == semver.Major("v"+other.Version)
 }
 
-func (t *CDEventType) UnmarshalJSON(data []byte) error {
-	// Ignore null, like in the main JSON package.
-	if string(data) == "null" || string(data) == `""` {
-		return nil
-	}
-	cdeventType, err := CDEventTypeFromString(strings.Trim(string(data), "\""))
-	if err != nil {
-		return err
-	}
-	*t = *cdeventType
-	return nil
-}
-
-func (t CDEventType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.String())
-}
-
 func CDEventTypeFromString(cdeventType string) (*CDEventType, error) {
 	parts := CDEventsTypeCRegex.FindStringSubmatch(cdeventType)
 	if len(parts) != 4 {
@@ -184,8 +155,11 @@ func CDEventTypeFromString(cdeventType string) (*CDEventType, error) {
 
 type CDEventReader interface {
 
-	// Event type and spec version readers
-	BaseContextReader
+	// The CDEventType "dev.cdevents.*"
+	GetType() CDEventType
+
+	// The CDEvents specification version implemented
+	GetVersion() string
 
 	// The event ID, unique for this event within the event producer (source)
 	GetId() string

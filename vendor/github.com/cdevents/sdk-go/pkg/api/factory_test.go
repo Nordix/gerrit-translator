@@ -16,7 +16,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package api_test
+package api
 
 import (
 	"encoding/json"
@@ -24,15 +24,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdevents/sdk-go/pkg/api"
-	cdevents "github.com/cdevents/sdk-go/pkg/api/v03"
-
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 )
 
 func init() {
+
 	// Get the time once
 	t := time.Now()
 	timeNow = func() time.Time {
@@ -54,18 +51,13 @@ func testUUID() string {
 type testNewCDEventType struct {
 	name          string
 	eventType     string
-	expectedEvent api.CDEvent
+	expectedEvent CDEvent
 }
 
 // tests is used in TestNewCDEvents. It's content is
 // generated in zz_factory_tests.go
-var (
-	tests           []testNewCDEventType
-	testContentType = "application/json"
-	timeNow         = time.Now
-	uuidNewRandom   = uuid.NewRandom
-	testSpecVersion = "0.3.0"
-)
+var tests []testNewCDEventType
+var testContentType = "application/json"
 
 func TestNewCDEvent(t *testing.T) {
 	testDataJsonBytes, err := json.Marshal(testDataJson)
@@ -75,13 +67,11 @@ func TestNewCDEvent(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			event, err := cdevents.NewCDEvent(tc.eventType, testSpecVersion)
+			event, err := NewCDEvent(tc.eventType)
 			if err != nil {
 				t.Fatalf("didn't expected it to fail, but it did: %v", err)
 			}
-			if d := cmp.Diff(tc.expectedEvent, event,
-				cmpopts.IgnoreFields(api.Context{}, "Timestamp"),
-				cmpopts.IgnoreFields(api.Context{}, "Id")); d != "" {
+			if d := cmp.Diff(tc.expectedEvent, event); d != "" {
 				t.Errorf("args: diff(-want,+got):\n%s", d)
 			}
 			// Check GetType
@@ -130,7 +120,7 @@ func TestNewCDEvent(t *testing.T) {
 
 func TestNewCDEventFailed(t *testing.T) {
 
-	_, err := cdevents.NewCDEvent(api.CDEventType{Subject: "not supported"}.String(), testSpecVersion)
+	_, err := NewCDEvent(CDEventType{Subject: "not supported"}.String())
 	if err == nil {
 		t.Fatalf("expected it to fail, but it didn't")
 	}

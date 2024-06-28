@@ -1,7 +1,7 @@
 # github.com/cdevents/sdk-go v0.3.2
 ## explicit; go 1.18
 github.com/cdevents/sdk-go/pkg/api
-# github.com/cdevents/webhook-adapter v0.0.0-00010101000000-000000000000 => github.com/Nordix/webhook-cdevents-adapter v0.0.0-20240314095508-2cc2c286506d
+# github.com/cdevents/webhook-adapter v0.0.0-20240319203345-6d6c6c54f065
 ## explicit; go 1.22.0
 github.com/cdevents/webhook-adapter/pkg/cdevents
 github.com/cdevents/webhook-adapter/pkg/proto
@@ -238,4 +238,3 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# github.com/cdevents/webhook-adapter => github.com/Nordix/webhook-cdevents-adapter v0.0.0-20240314095508-2cc2c286506d

@@ -20,7 +20,7 @@ package gerrit
 type CommonFields struct {
 	Type           string  `json:"type"`
 	EventCreatedOn float64 `json:"eventCreatedOn"`
-	RepoURL        string  `json:"repoURL,omitempty" cdevents:"source,url"`
+	RepoURL        string  `json:"repoURL,omitempty" cdevents:"context_source,url"`
 }
 
 type Submitter struct {
@@ -29,23 +29,23 @@ type Submitter struct {
 	Username string `json:"username"`
 }
 type RefUpdate struct {
-	OldRev  string `json:"oldRev"`
-	NewRev  string `json:"newRev"`
+	OldRev  string `json:"oldRev"` //cdevents:"subject_id", can not use same tag name within one struct
+	NewRev  string `json:"newRev" cdevents:"subject_id"`
 	RefName string `json:"refName"`
-	Project string `json:"project"`
+	Project string `json:"project" cdevents:"subject_source"`
 }
 
 // Gerrit event types
 
 type ProjectCreated struct {
 	ProjectName string `json:"projectName" cdevents:"name"`
-	HeadName    string `json:"headName" cdevents:"id"`
+	HeadName    string `json:"headName" cdevents:"subject_id"`
 	CommonFields
 }
 type ProjectHeadUpdated struct {
-	ProjectName string `json:"projectName"`
+	ProjectName string `json:"projectName" cdevents:"name"`
 	OldHead     string `json:"oldHead"`
-	NewHead     string `json:"newHead"`
+	NewHead     string `json:"newHead" cdevents:"subject_id"`
 	CommonFields
 }
 type RefUpdated struct {

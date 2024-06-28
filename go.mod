@@ -2,12 +2,11 @@ module github.com/cdevents/gerrit-translator
 
 go 1.22.0
 
-replace github.com/cdevents/webhook-adapter => github.com/Nordix/webhook-cdevents-adapter v0.0.0-20240314095508-2cc2c286506d
-
 require (
 	github.com/cdevents/sdk-go v0.3.2
-	github.com/cdevents/webhook-adapter v0.0.0-00010101000000-000000000000
+	github.com/cdevents/webhook-adapter v0.0.0-20240319203345-6d6c6c54f065
 	github.com/hashicorp/go-plugin v1.6.0
+	go.uber.org/zap v1.27.0
 )
 
 require (
@@ -32,7 +31,6 @@ require (
 	github.com/package-url/packageurl-go v0.1.2 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.21.0 // indirect

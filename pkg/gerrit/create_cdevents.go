@@ -18,20 +18,49 @@ SPDX-License-Identifier: Apache-2.0
 package gerrit
 
 import (
+	mimic "github.com/cdevents/mimic"
 	sdk "github.com/cdevents/sdk-go/pkg/api"
 )
 
+// map If I want to build a custom Field, instead of direct field-field map??
+// cdevents:"context_source,url" - doesn't work - map multiple fileds to set??
+// map fields to a common Object, Ex: Repository *Reference
+
+// ------------
+
+// copygen elimantes only setting the fields manually, other code can be still exist/refactored.
+// no chance of introducing bulk event types at this stage of gerrit for translating into CDEvents
+
 func (projectCreated *ProjectCreated) RepositoryCreatedCDEvent() (string, error) {
-	Log().Info("Creating CDEvent RepositoryCreatedEvent")
+	Log().Info("Creating CDEvent RepositoryCreatedEvent with Mimic %s\n", projectCreated.ProjectName)
 	cdEvent, err := sdk.NewRepositoryCreatedEvent()
 	if err != nil {
 		Log().Error("Error creating CDEvent RepositoryCreatedEvent %s\n", err)
 		return "", err
 	}
-	// cdEvent.SetSource(projectCreated.RepoURL)
-	// cdEvent.SetSubjectName(projectCreated.ProjectName)
-	//cdEvent.SetSubjectId(projectCreated.HeadName)
-	//cdEvent.SetSubjectUrl(projectCreated.RepoURL)
+	customVisitor := mimic.NewTagVisitor(mimic.NewTags().AddTag("cdevents"))
+	copier := mimic.NewCopier(
+		mimic.WithSrcVisitor(customVisitor),
+		mimic.WithDstVisitor(customVisitor),
+		// Overrides the default singleton copier which allows us to use the generic
+		// Copy function
+		mimic.WithInstance(),
+	)
+	err = copier.Copy(&projectCreated, cdEvent)
+	if err != nil {
+		Log().Error("Mimic copier: Error copying data from ProjectCreated gerrit event into RepositoryCreated CDEvent %s\n", err)
+		return "", err
+	} else {
+		Log().Info("Mimic copier : Success cdEvent.GetSource() %s\n", cdEvent.GetSource())
+		Log().Info("Mimic copier : Success cdEvent.GetSubject() type %s\n", cdEvent.GetSubject().GetSubjectType())
+	}
+
+	//ToRepositoryCreatedEvent(cdEvent, projectCreated)
+	//cdEvent.SetSource(projectCreated.RepoURL + "sdewsrf") // cdevents:"context_source"
+	// cdEvent.SetSubjectName(projectCreated.ProjectName) // cdevents:"name"
+	// cdEvent.SetSubjectId(projectCreated.HeadName) // cdevents:"subject_id"
+	//cdEvent.SetSubjectUrl(projectCreated.RepoURL) // cdevents:"context_source,url" - doesn't work - How to map this along with context_source??
+
 	cdEventStr, err := sdk.AsJsonString(cdEvent)
 	if err != nil {
 		Log().Error("Error creating RepositoryCreated CDEvent as Json string %s\n", err)
@@ -48,10 +77,11 @@ func (projectHeadUpdated *ProjectHeadUpdated) RepositoryModifiedCDEvent() (strin
 		Log().Error("Error creating CDEvent RepositoryModified %s\n", err)
 		return "", err
 	}
-	cdEvent.SetSource(projectHeadUpdated.RepoURL)
-	cdEvent.SetSubjectName(projectHeadUpdated.ProjectName)
-	cdEvent.SetSubjectId(projectHeadUpdated.NewHead)
-	cdEvent.SetSubjectUrl(projectHeadUpdated.NewHead)
+	ToRepositoryModifiedEvent(cdEvent, projectHeadUpdated)
+	//cdEvent.SetSource(projectHeadUpdated.RepoURL) // cdevents:"context_source"
+	//cdEvent.SetSubjectName(projectHeadUpdated.ProjectName) // cdevents:"name"
+	//cdEvent.SetSubjectId(projectHeadUpdated.NewHead) // cdevents:"subject_id"
+	cdEvent.SetSubjectUrl(projectHeadUpdated.RepoURL) // cdevents:"url"- how to map this along with context_source??
 	cdEventStr, err := sdk.AsJsonString(cdEvent)
 	if err != nil {
 		Log().Error("Error creating RepositoryModified CDEvent as Json string %s\n", err)
@@ -68,10 +98,10 @@ func (refUpdated *RefUpdated) BranchCreatedCDEvent() (string, error) {
 		Log().Error("Error creating CDEvent BranchCreatedEvent %s\n", err)
 		return "", err
 	}
-	cdEvent.SetSource(refUpdated.RepoURL)
-	cdEvent.SetSubjectId(refUpdated.RefUpdate.NewRev)
-	cdEvent.SetSubjectRepository(&sdk.Reference{Id: refUpdated.RefUpdate.RefName})
-	cdEvent.SetSubjectSource(refUpdated.RefUpdate.Project)
+	//cdEvent.SetSource(refUpdated.RepoURL)                                          // cdevents:"context_source"
+	//cdEvent.SetSubjectId(refUpdated.RefUpdate.NewRev)                              // cdevents:"subject_id"
+	cdEvent.SetSubjectRepository(&sdk.Reference{Id: refUpdated.RefUpdate.RefName}) //map field to Object - Repository *Reference `json:"repository,omitempty" cdevents:"repository"`"
+	//cdEvent.SetSubjectSource(refUpdated.RefUpdate.Project)                         // Source == SubjectSource / cdevents:"subject_source"
 
 	cdEventStr, err := sdk.AsJsonString(cdEvent)
 	if err != nil {
@@ -88,10 +118,10 @@ func (refUpdated *RefUpdated) BranchDeletedCDEvent() (string, error) {
 		Log().Error("Error creating CDEvent BranchDeletedEvent %s\n", err)
 		return "", err
 	}
-	cdEvent.SetSource(refUpdated.RepoURL)
-	cdEvent.SetSubjectId(refUpdated.RefUpdate.OldRev)
-	cdEvent.SetSubjectRepository(&sdk.Reference{Id: refUpdated.RefUpdate.RefName})
-	cdEvent.SetSubjectSource(refUpdated.RefUpdate.Project)
+	//cdEvent.SetSource(refUpdated.RepoURL)                                          // cdevents:"context_source"
+	cdEvent.SetSubjectId(refUpdated.RefUpdate.OldRev)                              // cdevents:"subject_id"
+	cdEvent.SetSubjectRepository(&sdk.Reference{Id: refUpdated.RefUpdate.RefName}) // Repository *Reference `json:"repository,omitempty" cdevents:"repository"`"
+	//cdEvent.SetSubjectSource(refUpdated.RefUpdate.Project)                         // Source == SubjectSource / cdevents:"subject_source"
 
 	cdEventStr, err := sdk.AsJsonString(cdEvent)
 	if err != nil {
