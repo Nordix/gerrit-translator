@@ -20,7 +20,7 @@ package gerrit
 type CommonFields struct {
 	Type           string  `json:"type"`
 	EventCreatedOn float64 `json:"eventCreatedOn"`
-	RepoURL        string  `json:"repoURL,omitempty" cdevents:"context_source,url"`
+	RepoURL        string  `json:"repoURL,omitempty" mimic:"Context.Source,Subject.Content.Url"`
 }
 
 type Submitter struct {
@@ -38,8 +38,8 @@ type RefUpdate struct {
 // Gerrit event types
 
 type ProjectCreated struct {
-	ProjectName string `json:"projectName" cdevents:"name"`
-	HeadName    string `json:"headName" cdevents:"subject_id"`
+	ProjectName string `json:"projectName" mimic:"Subject.Content.Name"`
+	HeadName    string `json:"headName" mimic:"Subject.Id"`
 	CommonFields
 }
 type ProjectHeadUpdated struct {

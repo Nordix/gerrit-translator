@@ -46,7 +46,8 @@ func (projectCreated *ProjectCreated) RepositoryCreatedCDEvent() (string, error)
 		// Copy function
 		mimic.WithInstance(),
 	)
-	err = copier.Copy(&projectCreated, cdEvent)
+	err = copier.Copy(projectCreated, cdEvent)
+
 	if err != nil {
 		Log().Error("Mimic copier: Error copying data from ProjectCreated gerrit event into RepositoryCreated CDEvent %s\n", err)
 		return "", err
