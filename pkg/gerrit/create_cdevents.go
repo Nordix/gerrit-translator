@@ -38,15 +38,14 @@ func (projectCreated *ProjectCreated) RepositoryCreatedCDEvent() (string, error)
 		Log().Error("Error creating CDEvent RepositoryCreatedEvent %s\n", err)
 		return "", err
 	}
-	customVisitor := mimic.NewTagVisitor(mimic.NewTags().AddTag("cdevents"))
-	copier := mimic.NewCopier(
-		mimic.WithSrcVisitor(customVisitor),
-		mimic.WithDstVisitor(customVisitor),
-		// Overrides the default singleton copier which allows us to use the generic
-		// Copy function
+	tagVisitor := mimic.NewTagVisitor(mimic.TagVisitorOptions.WithFlattenKeys(true))
+	fieldVisitor := mimic.NewFieldVisitor(mimic.FieldVisitorOptions.WithFlattenKeys(true))
+	mimic.NewCopier(
+		mimic.WithSrcVisitor(tagVisitor),
+		mimic.WithDstVisitor(fieldVisitor),
 		mimic.WithInstance(),
 	)
-	err = copier.Copy(projectCreated, cdEvent)
+	err = mimic.CopyTo(projectCreated, cdEvent)
 
 	if err != nil {
 		Log().Error("Mimic copier: Error copying data from ProjectCreated gerrit event into RepositoryCreated CDEvent %s\n", err)
